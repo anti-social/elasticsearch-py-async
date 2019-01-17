@@ -63,14 +63,23 @@ class AIOHttpConnection(Connection):
                 verify_certs = True
                 use_ssl = True
 
+        aiohttp_major_version = int(aiohttp.__version__.partition('.')[0])
+        if aiohttp_major_version < 3:
+            connector_kwargs = dict(
+                verify_ssl=verify_certs,
+                ssl_context=ssl_context,
+            )
+        else:
+            connector_kwargs = dict(
+                ssl=ssl_context if verify_certs else False,
+            )
         self.session = aiohttp.ClientSession(
             auth=http_auth,
             conn_timeout=self.timeout,
             connector=aiohttp.TCPConnector(
                 loop=self.loop,
-                verify_ssl=verify_certs,
                 use_dns_cache=use_dns_cache,
-                ssl_context=ssl_context,
+                **connector_kwargs
             ),
             headers=headers
         )
